@@ -1,0 +1,53 @@
+<!doctype html>
+<html ng-app="list">
+<head>
+   <meta charset="utf-8" />
+   <title>List</title>
+   <!-- bower:css -->
+   <link rel="stylesheet" href="bower_components/normalize.css/normalize.css" />
+   <!-- endbower -->
+   <link rel="stylesheet" href="style.css" />
+
+   <!-- bower:js -->
+   <script src="bower_components/angular/angular.js"></script>
+   <!-- endbower -->
+   <script src="app.js"></script>
+</head>
+<body ng-controller="main" ng-cloak>
+   <div class="list">
+      <div class="list__header">
+         <div class="list__header__col list__name-col">Name</div>
+         <div class="list__header__col list__owner-col">Owner</div>
+         <div class="list__header__col list__time-started-col">Time Started</div>
+         <div class="list__header__col list__state-col">State</div>
+         <div class="list__header__col list__metrics-col">Metrics</div>
+         <div class="list__header__col list__build-col">Build</div>
+         <div class="list__header__col list__unit-tests-col">Unit Tests</div>
+         <div class="list__header__col list__functional-tests-col">Functional Tests</div>
+      </div>
+
+      <div ng-repeat="item in list" class="list__item"
+           ng-class="'list__item--' + item.status()">
+         <div class="list__item__col list__name-col">
+            <span class="firewall-icon" ng-class="'firewall-icon' + item.state()" ng-if="item.type === 'firewall'"></span>
+            <span class="build-icon" ng-class="'build-icon' + item.state()" ng-if="item.type === 'build'"></span>
+            <span>{{ item.name }}</span>
+         </div>
+         <div class="list__item__col list__owner-col">{{ item.owner }}</div>
+         <div class="list__item__col list__time-started-col">{{ item.startTime | date: 'M/d/yy h:mma' | lowercase }}</div>
+         <div class="list__item__col list__state-col">{{ item.state() }}</div>
+         <div class="list__item__col list__metrics-col">
+            <ls-progress ls-state="item.metrics.state" ls-value="item.metrics.progress" />
+         </div>
+         <div class="list__item__col list__build-col">
+            <ls-progress ls-state="" ls-value="" />
+         </div>
+         <div class="list__item__col list__unit-tests-col">
+            <ls-progress ls-state="" ls-value="" />
+         </div>
+         <div class="list__item__col list__functional-tests-col">
+            <ls-progress ls-state="" ls-value="" />
+         </div>
+      </div>
+   </div>
+</body>

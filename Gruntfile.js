@@ -6,6 +6,7 @@ module.exports = function (grunt) {
                compress: false
             },
             files: {
+               '.tmp/style.css': 'style.less'
             }
          }
       },
@@ -13,6 +14,7 @@ module.exports = function (grunt) {
       autoprefixer: {
          all: {
             files: {
+               'style.css': '.tmp/style.css'
             }
          },
          options: {
@@ -31,7 +33,7 @@ module.exports = function (grunt) {
 
       watch: {
          all: {
-            files: ['styles/**/*.less'],
+            files: ['*.less'],
             tasks: ['less', 'autoprefixer']
          }
       },

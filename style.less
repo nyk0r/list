@@ -1,0 +1,33 @@
+@gray-darker:  lighten(#000, 13.5%);
+@gray-dark:    lighten(#000, 20%);
+@gray:         lighten(#000, 33.5%);
+@gray-light:   lighten(#000, 75%);
+@gray-lighter: lighten(#000, 93.5%);
+@gray-white:   lighten(#000, 98.5%);
+
+@state-pending: @gray;
+@state-progress: #00F;
+@state-success: #0F0;
+@state-error: #F00;
+
+body {
+   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+   background-color: @gray-white;
+   color: @gray-dark;
+}
+
+.container {
+   width: 1000px;
+   margin: 3em auto;
+   background-color: @gray-lighter;
+   box-shadow: 0 0 25px @gray-light;
+}
+
+.list {
+   @headers: 'name', 'owner', 'time-sarted', 'state', 'metrics', 'build', 'unit-tests', 'functional-tests';
+   //@headerWidths: ,
+
+   &__header__col {
+      display: inline-block;
+   }
+}

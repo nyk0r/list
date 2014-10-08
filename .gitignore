@@ -2,4 +2,6 @@
 [Tt]humbs.db
 .idea/
 node_modules/
+bower_components/
 .tmp/
+style.css
