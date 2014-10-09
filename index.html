@@ -1,5 +1,5 @@
 <!doctype html>
-<html ng-app="list">
+<html xmlns:ng="http://angularjs.org" id="ng-app" ng-app="list">
 <head>
    <meta charset="utf-8" />
    <title>List</title>
@@ -7,46 +7,122 @@
    <link rel="stylesheet" href="bower_components/normalize.css/normalize.css" />
    <!-- endbower -->
    <link rel="stylesheet" href="style.css" />
-
-   <!-- bower:js -->
+   <!--[if lte IE 8]><script src="lib/excanvas.js"></script><![endif]-->
+    <!--[if lte IE 8]>
+      <script>
+        document.createElement('ls-progress');
+        document.createElement('ls-pie');
+      </script>
+    <![endif]-->
+   <script src="bower_components/jquery/dist/jquery.js"></script>
    <script src="bower_components/angular/angular.js"></script>
    <!-- endbower -->
+   <script src="lib/jquery.flot.js"></script>
+   <script src="lib/jquery.flot.pie.js"></script>
    <script src="app.js"></script>
 </head>
 <body ng-controller="main" ng-cloak>
-   <div class="list">
-      <div class="list__header">
-         <div class="list__header__col list__name-col">Name</div>
-         <div class="list__header__col list__owner-col">Owner</div>
-         <div class="list__header__col list__time-started-col">Time Started</div>
-         <div class="list__header__col list__state-col">State</div>
-         <div class="list__header__col list__metrics-col">Metrics</div>
-         <div class="list__header__col list__build-col">Build</div>
-         <div class="list__header__col list__unit-tests-col">Unit Tests</div>
-         <div class="list__header__col list__functional-tests-col">Functional Tests</div>
-      </div>
+   <div class="container">
+      <div class="list">
+         <div class="list__header">
+            <div class="list__header__col list__header__col--sortable list__name-col"
+                 ng-click="sort('name')">
+               Changelist / Build
+               <span ng-class="sortDir + '-sort-icon'" ng-show="'name' === sortField"></span>
+            </div>
+            <div class="list__header__col list__header__col--sortable list__owner-col"
+                 ng-click="sort('owner')">
+               Owner
+               <span ng-class="sortDir + '-sort-icon'" ng-show="'owner' === sortField"></span>
+            </div>
+            <div class="list__header__col list__header__col--sortable list__time-started-col"
+                 ng-click="sort('startTime')">
+               Time Started
+               <span ng-class="sortDir + '-sort-icon'" ng-show="'startTime' === sortField"></span>
+            </div>
+            <div class="list__header__col list__header__col--sortable list__state-col"
+                 ng-click="sort('state')">
+               State
+               <span ng-class="sortDir + '-sort-icon'" ng-show="'state' === sortField"></span>
+            </div>
+            <div class="list__header__col list__metrics-col">Metrics</div>
+            <div class="list__header__col list__build-col">Build</div>
+            <div class="list__header__col list__unit-tests-col">Unit Tests</div>
+            <div class="list__header__col list__functional-tests-col">Functional Tests</div>
+         </div>
 
-      <div ng-repeat="item in list" class="list__item"
-           ng-class="'list__item--' + item.status()">
-         <div class="list__item__col list__name-col">
-            <span class="firewall-icon" ng-class="'firewall-icon' + item.state()" ng-if="item.type === 'firewall'"></span>
-            <span class="build-icon" ng-class="'build-icon' + item.state()" ng-if="item.type === 'build'"></span>
-            <span>{{ item.name }}</span>
-         </div>
-         <div class="list__item__col list__owner-col">{{ item.owner }}</div>
-         <div class="list__item__col list__time-started-col">{{ item.startTime | date: 'M/d/yy h:mma' | lowercase }}</div>
-         <div class="list__item__col list__state-col">{{ item.state() }}</div>
-         <div class="list__item__col list__metrics-col">
-            <ls-progress ls-state="item.metrics.state" ls-value="item.metrics.progress" />
-         </div>
-         <div class="list__item__col list__build-col">
-            <ls-progress ls-state="" ls-value="" />
-         </div>
-         <div class="list__item__col list__unit-tests-col">
-            <ls-progress ls-state="" ls-value="" />
-         </div>
-         <div class="list__item__col list__functional-tests-col">
-            <ls-progress ls-state="" ls-value="" />
+         <div ng-repeat="item in list | orderBy:sortField:sortDir==='desc'" class="list__item"
+              ng-class="['list__item--' + item.state(), selected($index) ? 'list__item--selected' : '']">
+            <div class="list__item__summary" ng-click="select($index)">
+               <div class="list__item__col list__name-col">
+                  <span class="firewall-icon" ng-class="'firewall-icon--' + item.state()" ng-if="item.type === 'firewall'"></span>
+                  <span class="build-icon" ng-class="'build-icon--' + item.state()" ng-if="item.type === 'build'"></span>
+                  <span>{{ item.name }}</span>
+               </div>
+               <div class="list__item__col list__owner-col">{{ item.owner }}</div>
+               <div class="list__item__col list__time-started-col">{{ item.startTime | date: 'M/d/yy h:mma' | lowercase }}</div>
+               <div class="list__item__col list__state-col">{{ item.state() | uppercaseFirst }}</div>
+               <div class="list__item__col list__metrics-col" ng-hide="selected($index)">
+                  <ls-progress ls-state="item.metrics.state()" ls-value="item.metrics.progress" />
+               </div>
+               <div class="list__item__col list__build-col" ng-hide="selected($index)">
+                  <ls-progress ls-state="item.build.state()" ls-value="item.build.progress" />
+               </div>
+               <div class="list__item__col list__unit-tests-col" ng-hide="selected($index)">
+                  <ls-progress ls-state="item.unitTests.state()" ls-value="item.unitTests.progress" />
+               </div>
+               <div class="list__item__col list__functional-tests-col" ng-hide="selected($index)">
+                  <ls-progress ls-state="item.functionalTests.state()" ls-value="item.functionalTests.progress" />
+               </div>
+            </div>
+            <div class="badges-list" ng-show="selected($index)">
+               <div class="badge" ng-class="'badge--' + item.metrics.state()">
+                  <div class="badge__title">Metrics</div>
+                  <div>
+                     <div class="arrow-up-badge">
+                        <div class="arrow-up-badge__triangle"></div>
+                        <div class="arrow-up-badge__rectangle"></div>
+                        <div class="arrow-up-badge__text">{{ item.metrics.test }}</div>
+                     </div>
+                     Test
+                  </div>
+                  <div>
+                     <div class="arrow-up-badge">
+                        <div class="arrow-up-badge__triangle"></div>
+                        <div class="arrow-up-badge__rectangle"></div>
+                        <div class="arrow-up-badge__text">{{ item.metrics.maintainability }}</div>
+                     </div>
+                     Maintainability
+                  </div>
+                  <div>
+                     <div class="arrow-right-badge">
+                        <div class="arrow-right-badge__triangle"></div>
+                        <div class="arrow-right-badge__rectangle"></div>
+                        <div class="arrow-right-badge__text">{{ item.metrics.security }}</div>
+                     </div>
+                     Security
+                  </div>
+                  <div>
+                     <div class="arrow-right-badge">
+                        <div class="arrow-right-badge__triangle"></div>
+                        <div class="arrow-right-badge__rectangle"></div>
+                        <div class="arrow-right-badge__text">{{ item.metrics.workmanship }}</div>
+                     </div>
+                     Workmanship
+                  </div>
+               </div>
+               <div class="badge" ng-class="'badge--' + item.build.state()">
+                  <div class="badge__title">Build</div>
+               </div>
+               <div class="badge" ng-class="'badge--' + item.unitTests.state()">
+                  <div class="badge__title">Unit Tests</div>
+                  <ls-pie ls-series="[item.unitTests.passedCount, item.unitTests.faildCount]" ls-colors="['#70AD47', '#ed7d31']" />
+               </div>
+               <div class="badge" ng-class="'badge--' + item.functionalTests.state()">
+                  <div class="badge__title">Functional Tests</div>
+                  <ls-pie ls-series="[item.functionalTests.passedCount, item.functionalTests.faildCount]" ls-colors="['#70AD47', '#ed7d31']" />
+               </div>
+            </div>
          </div>
       </div>
    </div>

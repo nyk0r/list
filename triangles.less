@@ -1,0 +1,36 @@
+.shape-rectangle(@width, @height) {
+   width: @width;
+   height: @height;
+}
+
+.shape-square(@width) {
+   .shape-rectangle(@width, @width);
+}
+
+.shape-triangle-up(@width, @color: @shape-color) {
+   .shape-square(0);
+   border-left: @width/2 solid transparent;
+   border-right: @width/2 solid transparent;
+   border-bottom: @width solid @color;
+}
+
+.shape-triangle-down(@width, @color: @shape-color) {
+   .shape-square(0);
+   border-left: @width/2 solid transparent;
+   border-right: @width/2 solid transparent;
+   border-top: @width solid @color;
+}
+
+.shape-triangle-left(@width, @color: @shape-color) {
+   .shape-square(0);
+   border-top: @width/2 solid transparent;
+   border-right: @width solid @color;
+   border-bottom: @width/2 solid transparent;
+}
+
+.shape-triangle-right(@width, @color: @shape-color) {
+   .shape-square(0);
+   border-top: @width/2 solid transparent;
+   border-left: @width solid @color;
+   border-bottom: @width/2 solid transparent;
+}

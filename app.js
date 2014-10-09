@@ -4,17 +4,63 @@
       factory('lsDataSource', [function (){
          function Entity () { };
          Entity.prototype.state = function () {
-            var statuses = [
-               this.metrics.status(),
-               this.unitTests.status(),
-               this.functionalTests.status()];
-            if ('pending' in status) {
+            var states = [
+                  this.build.state(),
+                  this.metrics.state(),
+                  this.unitTests.state(),
+                  this.functionalTests.state()
+                ],
+                progress = [
+                  this.build.progress,
+                  this.metrics.progress,
+                  this.unitTests.porgress,
+                  this.functionalTests.progress
+                ];
+
+            function hasFaild () {
+               for (var idx = 0; idx < states.length; idx++) {
+                  if (states[idx] === 'fail') {
+                     return true;
+                  }
+               }
+               return false;
+            }
+
+            function inProgress () {
+               for (var idx = 0; idx < progress.length; idx++) {
+                  if (progress[idx] < 100) {
+                     return true;
+                  }
+               }
+               return false;
+            }
+
+            if (!this.startTime) {
                return 'pending';
-            } else if ('fail' in status) {
+            } else if (hasFaild()) {
                return 'fail';
-            } else {
+            } else if (inProgress()) {
+               return 'running';
+            }
+            else {
                return 'success';
             }
+         };
+
+         function Build () {};
+         Build.prototype.state = function () {
+            if (!this.release || !this.debug) {
+               return 'fail';
+            }
+
+            if (!this.progress) {
+               return 'pending';
+            }
+            if (this.progress < 100) {
+               return 'running';
+            }
+
+            return 'success';
          };
 
          function Metrics () {};
@@ -27,7 +73,7 @@
                return this.test < 60 ||
                       this.maintainability < 60 ||
                       this.security < 60 ||
-                      this.workmanship < 60 ? 'error' : 'success';
+                      this.workmanship < 60 ? 'fail' : 'success';
             }
          };
 
@@ -38,7 +84,7 @@
             } else if (this.progress < 100) {
                return 'running';
             } else {
-               return this.faildCount / (this.faildCount + passedCount) < 0.6 ? 'fail' : 'success';
+               return this.passedCount / (this.faildCount + this.passedCount) < 0.6 ? 'fail' : 'success';
             }
          };
 
@@ -60,7 +106,7 @@
                    return result.join('');
                },
                rndStatus = function () {
-                   return rndBool() ? 100 : rnd100();
+                   return rnd() <= 0.8 ? 100 : rnd100();
                },
                rndFailed = function () {
                    return rndBool() ? 0 : rnd100();
@@ -72,7 +118,7 @@
                   type: rndBool() ? 'firewall' : 'build',
                   name: rndStr(10),
                   owner: rndStr(10),
-                  startTime: new Date((new Date()).valueOf() - rnd() * 10000),
+                  startTime: rndBool() ? null : new Date((new Date()).valueOf() - rnd() * 10000),
                   metrics: angular.extend(new Metrics(), {
                      progress: rndStatus(),
                      test: rndStatus(),
@@ -80,18 +126,21 @@
                      security: rndStatus(),
                      workmanship: rndStatus(),
                   }),
-                  build: {
-                     debug: rndBool(),
-                     release: rndBool()
-                  },
+                  build: angular.extend(new Build(), {
+                     progress: rndStatus(),
+                     debug: rnd() <= 0.7,
+                     release: rnd() <= 0.7
+                  }),
                   unitTests: angular.extend(new Tests(), {
+                     progress: rndStatus(),
                      passedCount: rnd100(),
-                     faildCount: rndFailed(),
+                     faildCount: rnd() * 20,
                      coverage: rnd100()
                   }),
                   functionalTests: angular.extend(new Tests(), {
+                     progress: rndStatus(),
                      passedCount: rnd100(),
-                     faildCount: rndFailed(),
+                     faildCount: rnd() * 20,
                      coverage: rnd100()
                   })
                }))
@@ -104,21 +153,120 @@
             get: generateData
          }
       }]).
+      filter('uppercaseFirst', function () {
+         return function (str) {
+            return str[0].toUpperCase() + str.slice(1);
+         }
+      }).
       directive('lsProgress', function () {
          return {
             template: [
                '<div class="progress">',
                   '<div class="progress__indicator"></div>',
-               '<div>',
+               '</div>',
             ].join(''),
-            restrict: 'A',
+            restrict: 'E',
             scope: {
-               state: '@lsState',
-               value: '@lsValue'
+               state: '=lsState',
+               value: '=lsValue'
+            },
+            link: function (scope, element, attrs, ngModelController) {
+               scope.$watch('state', function (val) {
+                  var indicator = element.find('.progress__indicator'),
+                      classes = indicator[0].className.split(/\s/g),
+                      idx;
+
+                  for (idx = 0; idx < classes.length; idx++) {
+                     if (/progress__indicator--.+/.test(classes[idx])) {
+                        indicator.removeClass(classes[idx]);
+                     }
+                  }
+                  indicator.addClass('progress__indicator--' + val);
+               });
+               scope.$watch('value', function (val) {
+                  element.find('.progress__indicator').width(val + '%');
+               });
             }
          };
       }).
+      directive('lsPie', function () {
+         return {
+            template: '<div class="pie-chart"></div>',
+            restrict: 'E',
+            scope: {
+               series: '=lsSeries',
+               colors: '=lsColors'
+            },
+            link: function (scope, element, attrs, ngModelController) {
+               scope.$watch(
+                  function () {
+                     var series = scope.series,
+                         colors = scope.colors,
+                         data = [],
+                         len = series.length,
+                         idx;
+
+                     if (!angular.isArray(series) || !angular.isArray(colors) || series.length !== colors.length) {
+                        throw new Error('Arguments Exception');
+                     }
+
+                     for (idx = 0; idx < len; idx++) {
+                        data.push({
+                           data: series[idx],
+                           color: colors[idx]
+                        });
+                     }
+
+                     return data;
+                  },
+                  function (value) {
+                     element.find('.pie-chart').plot(value, {
+                         series: {
+                             pie: {
+                                 show: true
+                             }
+                         },
+                         grid: {
+                             hoverable: true
+                         }
+                     });
+                  },
+                  true
+               );
+            }
+         }
+      }).
       controller('main', ['$scope', 'lsDataSource', function ($scope, dataSource) {
+         var selectedItemIdx;
+
          $scope.list = dataSource.get();
+
+         $scope.select = function (idx) {
+            if (selectedItemIdx === idx) {
+               selectedItemIdx = null;
+            } else {
+               selectedItemIdx = idx
+            }
+         }
+
+         $scope.selected = function (idx) {
+            return selectedItemIdx === idx;
+         }
+
+         $scope.sort = function (field) {
+            selectedItemIdx = null;
+
+            if ($scope.sortField === field) {
+               if ($scope.sortDir === 'asc') {
+                  $scope.sortDir = 'desc';
+               } else {
+                  $scope.sortField = null;
+                  $scope.sortDir = null;
+               }
+            } else {
+               $scope.sortField = field;
+               $scope.sortDir = 'asc';
+            }
+         }
       }]);
 }) (window, window.angular);
