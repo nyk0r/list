@@ -1,3 +1,6 @@
+﻿/* jshint node:true */
+'use strict';
+
 module.exports = function (grunt) {
    grunt.initConfig({
       less: {
@@ -8,6 +11,16 @@ module.exports = function (grunt) {
             files: {
                '.tmp/style.css': 'style.less'
             }
+         }
+      },
+
+      jshint: {
+         files: [
+            'Gruntfile.js',
+            'app.js'
+         ],
+         options: {
+            jshintrc: '.jshintrc'
          }
       },
 
@@ -46,6 +59,7 @@ module.exports = function (grunt) {
    });
 
    grunt.loadNpmTasks('grunt-contrib-less');
+   grunt.loadNpmTasks('grunt-contrib-jshint');
    grunt.loadNpmTasks('grunt-autoprefixer');
    grunt.loadNpmTasks('grunt-contrib-connect');
    grunt.loadNpmTasks('grunt-contrib-watch');

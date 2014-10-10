@@ -2,7 +2,7 @@
    'use strict';
    angular.module('list', []).
       factory('lsDataSource', [function (){
-         function Entity () { };
+         function Entity () { }
          Entity.prototype.state = function () {
             var states = [
                   this.build.state(),
@@ -47,7 +47,7 @@
             }
          };
 
-         function Build () {};
+         function Build () {}
          Build.prototype.state = function () {
             if (!this.release || !this.debug) {
                return 'fail';
@@ -63,10 +63,10 @@
             return 'success';
          };
 
-         function Metrics () {};
+         function Metrics () {}
          Metrics.prototype.state = function () {
             if (this.progress === 0) {
-               return 'pending'
+               return 'pending';
             } else if (this.progress < 100) {
                return 'running';
             } else {
@@ -77,14 +77,17 @@
             }
          };
 
-         function Tests () {};
+         function Tests () {}
+         Tests.prototype.percentsPassed = function () {
+            return global.Math.round(this.passedCount / (this.faildCount + this.passedCount) * 100);
+         };
          Tests.prototype.state = function () {
             if (this.progress === 0) {
-               return 'pending'
+               return 'pending';
             } else if (this.progress < 100) {
                return 'running';
             } else {
-               return this.passedCount / (this.faildCount + this.passedCount) < 0.6 ? 'fail' : 'success';
+               return this.percentsPassed() < 60 ? 'fail' : 'success';
             }
          };
 
@@ -92,8 +95,8 @@
             var max = 10,
                idx,
                rnd = global.Math.random,
-               rndBool = function () { return rnd() > 0.5 ? true : false },
-               rnd100  = function () { return global.Math.ceil(rnd() * 100) },
+               rndBool = function () { return rnd() > 0.5 ? true : false; },
+               rnd100  = function () { return global.Math.ceil(rnd() * 100); },
                rndStr  = function (len) {
                    var source = 'abcdefghijklmnopqrstuvwzyz0123456789_-',
                        idx,
@@ -143,7 +146,7 @@
                      faildCount: rnd() * 20,
                      coverage: rnd100()
                   })
-               }))
+               }));
             }
 
             return result;
@@ -151,12 +154,12 @@
 
          return {
             get: generateData
-         }
+         };
       }]).
       filter('uppercaseFirst', function () {
          return function (str) {
             return str[0].toUpperCase() + str.slice(1);
-         }
+         };
       }).
       directive('lsProgress', function () {
          return {
@@ -234,7 +237,7 @@
                   true
                );
             }
-         }
+         };
       }).
       controller('main', ['$scope', 'lsDataSource', function ($scope, dataSource) {
          var selectedItemIdx;
@@ -245,13 +248,13 @@
             if (selectedItemIdx === idx) {
                selectedItemIdx = null;
             } else {
-               selectedItemIdx = idx
+               selectedItemIdx = idx;
             }
-         }
+         };
 
          $scope.selected = function (idx) {
             return selectedItemIdx === idx;
-         }
+         };
 
          $scope.sort = function (field) {
             selectedItemIdx = null;
@@ -267,6 +270,15 @@
                $scope.sortField = field;
                $scope.sortDir = 'asc';
             }
-         }
+         };
+
+         $scope.computeProgressColor = function (value) {
+            var success = value / 100,
+                fail = (100 - value) / 100;
+
+            return '#' +
+                   global.Math.round(fail * 255).toString(16) +
+                   global.Math.round(success * 255).toString(16) + '00';
+         };
       }]);
 }) (window, window.angular);

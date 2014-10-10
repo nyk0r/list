@@ -77,50 +77,102 @@
             </div>
             <div class="badges-list" ng-show="selected($index)">
                <div class="badge" ng-class="'badge--' + item.metrics.state()">
-                  <div class="badge__title">Metrics</div>
-                  <div>
-                     <div class="arrow-up-badge">
-                        <div class="arrow-up-badge__triangle"></div>
-                        <div class="arrow-up-badge__rectangle"></div>
-                        <div class="arrow-up-badge__text">{{ item.metrics.test }}</div>
+                  <div class="badge__title text--large">Metrics</div>
+                     <div class="row">
+                        <div class="cell">
+                           <div class="arrow-up-badge">
+                              <div class="arrow-up-badge__triangle"></div>
+                              <div class="arrow-up-badge__rectangle"></div>
+                              <div class="arrow-up-badge__text">{{ item.metrics.test }}</div>
+                           </div>
+                           <div>Test</div>
+                        </div>
+                        <div class="cell">
+                           <div class="arrow-up-badge">
+                              <div class="arrow-up-badge__triangle"></div>
+                              <div class="arrow-up-badge__rectangle"></div>
+                              <div class="arrow-up-badge__text">{{ item.metrics.maintainability }}</div>
+                           </div>
+                           <div>Maintainability</div>
+                        </div>
                      </div>
-                     Test
-                  </div>
-                  <div>
-                     <div class="arrow-up-badge">
-                        <div class="arrow-up-badge__triangle"></div>
-                        <div class="arrow-up-badge__rectangle"></div>
-                        <div class="arrow-up-badge__text">{{ item.metrics.maintainability }}</div>
+                  <div class="row">
+                     <div class="cell">
+                        <div class="arrow-right-badge">
+                           <div class="arrow-right-badge__triangle"></div>
+                           <div class="arrow-right-badge__rectangle"></div>
+                           <div class="arrow-right-badge__text">{{ item.metrics.security }}</div>
+                        </div>
+                        <div>Security</div>
                      </div>
-                     Maintainability
-                  </div>
-                  <div>
-                     <div class="arrow-right-badge">
-                        <div class="arrow-right-badge__triangle"></div>
-                        <div class="arrow-right-badge__rectangle"></div>
-                        <div class="arrow-right-badge__text">{{ item.metrics.security }}</div>
+                     <div class="cell">
+                        <div class="arrow-right-badge">
+                           <div class="arrow-right-badge__triangle"></div>
+                           <div class="arrow-right-badge__rectangle"></div>
+                           <div class="arrow-right-badge__text">{{ item.metrics.workmanship }}</div>
+                        </div>
+                        <div>Workmanship</div>
                      </div>
-                     Security
-                  </div>
-                  <div>
-                     <div class="arrow-right-badge">
-                        <div class="arrow-right-badge__triangle"></div>
-                        <div class="arrow-right-badge__rectangle"></div>
-                        <div class="arrow-right-badge__text">{{ item.metrics.workmanship }}</div>
-                     </div>
-                     Workmanship
                   </div>
                </div>
                <div class="badge" ng-class="'badge--' + item.build.state()">
-                  <div class="badge__title">Build</div>
+                  <div class="badge__title text--large">Build</div>
+                  <div class="row">
+                     <div class="cell">
+                        <div class="build-icon build-icon--large" ng-class="'icon--' + item.build.state()"></div>
+                        <div ng-class="'text--' + item.build.state()">Debug</div>
+                     </div>
+                     <div class="cell">
+                        <div class="build-icon build-icon--large" ng-class="'icon--' + item.build.state()"></div>
+                        <div ng-class="'text--' + item.build.state()">Release</div>
+                     </div>
+                  </div>
                </div>
                <div class="badge" ng-class="'badge--' + item.unitTests.state()">
-                  <div class="badge__title">Unit Tests</div>
-                  <ls-pie ls-series="[item.unitTests.passedCount, item.unitTests.faildCount]" ls-colors="['#70AD47', '#ed7d31']" />
+                  <div class="badge__title text--large">Unit Tests</div>
+                  <div class="row">
+                     <div class="cell">
+                        <ls-pie ls-series="[item.unitTests.passedCount, item.unitTests.faildCount]" ls-colors="['#70AD47', '#ed7d31']" />
+                     </div>
+                     <div class="cell">
+                        <div class="text--large" ng-style="{ color: computeProgressColor(item.unitTests.percentsPassed()) }">
+                           {{item.unitTests.percentsPassed()}}%
+                        </div>
+                        <div class="text--small">tests passed</div>
+                     </div>
+                  </div>
+                  <div class="color-progress">
+                     <div class="color-progress__indicator" ng-style="{ width: item.unitTests.coverage + '%' }"></div>
+                     <div class="color-progress__text">
+                        <div class="text--small" ng-class="item.unitTests.coverage < 60 ? 'text--fail' : 'text--success'">
+                           {{ item.unitTests.coverage }}%
+                        </div>
+                        <div class="text--small">code coverage</div>
+                     </div>
+                  </div>
                </div>
                <div class="badge" ng-class="'badge--' + item.functionalTests.state()">
-                  <div class="badge__title">Functional Tests</div>
-                  <ls-pie ls-series="[item.functionalTests.passedCount, item.functionalTests.faildCount]" ls-colors="['#70AD47', '#ed7d31']" />
+                  <div class="badge__title text--large">Functional Tests</div>
+                  <div class="row">
+                     <div class="cell">
+                        <ls-pie ls-series="[item.functionalTests.passedCount, item.functionalTests.faildCount]" ls-colors="['#70AD47', '#ed7d31']" />
+                     </div>
+                     <div class="cell">
+                        <div class="text--large" ng-style="{ color: computeProgressColor(item.functionalTests.percentsPassed()) }">
+                           {{item.functionalTests.percentsPassed()}}%
+                        </div>
+                        <div class="text--small">tests passed</div>
+                     </div>
+                  </div>
+                  <div class="color-progress">
+                     <div class="color-progress__indicator" ng-style="{ width: item.functionalTests.coverage + '%' }"></div>
+                     <div class="color-progress__text">
+                        <div class="text--small" ng-class="item.functionalTests.coverage < 60 ? 'text--fail' : 'text--success'">
+                           {{ item.functionalTests.coverage }}%
+                        </div>
+                        <div class="text--small">code coverage</div>
+                     </div>
+                  </div>
                </div>
             </div>
          </div>
