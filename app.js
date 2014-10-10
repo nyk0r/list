@@ -1,9 +1,9 @@
 (function (global, angular) {
    'use strict';
    angular.module('list', []).
-      factory('lsDataSource', [function (){
-         function Entity () { }
-         Entity.prototype.state = function () {
+      factory('lsDataSource', ['$http', '$q', function ($http, $q) {
+         /*jshint validthis:true */
+         function entityState () {
             var states = [
                   this.build.state(),
                   this.metrics.state(),
@@ -45,10 +45,9 @@
             else {
                return 'success';
             }
-         };
+         }
 
-         function Build () {}
-         Build.prototype.state = function () {
+         function buildState () {
             if (!this.release || !this.debug) {
                return 'fail';
             }
@@ -61,10 +60,9 @@
             }
 
             return 'success';
-         };
+         }
 
-         function Metrics () {}
-         Metrics.prototype.state = function () {
+         function metricsState () {
             if (this.progress === 0) {
                return 'pending';
             } else if (this.progress < 100) {
@@ -75,13 +73,12 @@
                       this.security < 60 ||
                       this.workmanship < 60 ? 'fail' : 'success';
             }
-         };
+         }
 
-         function Tests () {}
-         Tests.prototype.percentsPassed = function () {
+         function testsPercentsPassed () {
             return global.Math.round(this.passedCount / (this.faildCount + this.passedCount) * 100);
-         };
-         Tests.prototype.state = function () {
+         }
+         function testsState () {
             if (this.progress === 0) {
                return 'pending';
             } else if (this.progress < 100) {
@@ -89,71 +86,28 @@
             } else {
                return this.percentsPassed() < 60 ? 'fail' : 'success';
             }
-         };
+         }
 
-         function generateData () {
-            var max = 10,
-               idx,
-               rnd = global.Math.random,
-               rndBool = function () { return rnd() > 0.5 ? true : false; },
-               rnd100  = function () { return global.Math.ceil(rnd() * 100); },
-               rndStr  = function (len) {
-                   var source = 'abcdefghijklmnopqrstuvwzyz0123456789_-',
-                       idx,
-                       result = [];
+         function fetchData () {
+            var deferred = $q.defer();
 
-                   for (idx = 0; idx < len; idx++) {
-                      result.push(source[global.Math.round(rnd()*source.length)]);
-                   }
+            $http.get('data.json').success(function(data, status, headers, config) {
+               angular.forEach(data, function (entity) {
+                  entity.state = entityState;
+                  entity.metrics.state = metricsState;
+                  entity.build.state = buildState;
+                  entity.unitTests.percentsPassed = entity.functionalTests.percentsPassed = testsPercentsPassed;
+                  entity.unitTests.state = entity.functionalTests.state = testsState;
+               });
 
-                   return result.join('');
-               },
-               rndStatus = function () {
-                   return rnd() <= 0.8 ? 100 : rnd100();
-               },
-               rndFailed = function () {
-                   return rndBool() ? 0 : rnd100();
-               },
-               result = [];
+               deferred.resolve(data);
+            });
 
-            for (idx = 0; idx < max; idx++) {
-               result.push(angular.extend(new Entity(), {
-                  type: rndBool() ? 'firewall' : 'build',
-                  name: rndStr(10),
-                  owner: rndStr(10),
-                  startTime: rndBool() ? null : new Date((new Date()).valueOf() - rnd() * 10000),
-                  metrics: angular.extend(new Metrics(), {
-                     progress: rndStatus(),
-                     test: rndStatus(),
-                     maintainability: rndStatus(),
-                     security: rndStatus(),
-                     workmanship: rndStatus(),
-                  }),
-                  build: angular.extend(new Build(), {
-                     progress: rndStatus(),
-                     debug: rnd() <= 0.7,
-                     release: rnd() <= 0.7
-                  }),
-                  unitTests: angular.extend(new Tests(), {
-                     progress: rndStatus(),
-                     passedCount: rnd100(),
-                     faildCount: rnd() * 20,
-                     coverage: rnd100()
-                  }),
-                  functionalTests: angular.extend(new Tests(), {
-                     progress: rndStatus(),
-                     passedCount: rnd100(),
-                     faildCount: rnd() * 20,
-                     coverage: rnd100()
-                  })
-               }));
-            }
-
-            return result;
+            return deferred.promise;
          }
 
          return {
-            get: generateData
+            get: fetchData
          };
       }]).
       filter('uppercaseFirst', function () {
@@ -239,10 +193,12 @@
             }
          };
       }).
-      controller('main', ['$scope', 'lsDataSource', function ($scope, dataSource) {
+      controller('lsMain', ['$scope', 'lsDataSource', function ($scope, dataSource) {
          var selectedItemIdx;
 
-         $scope.list = dataSource.get();
+         dataSource.get().then(function (data) {
+            $scope.list = data;
+         });
 
          $scope.select = function (idx) {
             if (selectedItemIdx === idx) {
